@@ -6,9 +6,6 @@ on:
       - 'Q-TRANSFORM-issue-*'
   pull_request:
 
-env:
-   MAVEN_CLI_OPTS: >-
-     -Djava.version=${{ github.ref_name != null && startsWith(github.ref_name, 'Q-TRANSFORM-issue-') && github.event_name == 'pull_request' && '17' || '1.8' }}
 jobs:
   q-code-transformation:
     runs-on: ubuntu-latest
@@ -17,13 +14,32 @@ jobs:
       - uses: actions/setup-java@v3
         with:
           java-version: ${{ github.ref_name != null && startsWith(github.ref_name, 'Q-TRANSFORM-issue-') && github.event_name == 'pull_request' && '17' || '8' }}
-          
           distribution: 'adopt'
+
+      - name: Install movie-service-utils dependency
+        run: |
+          echo "Installing pre-built movie-service-utils JAR..."
+          if [ "${{ github.ref_name != null && startsWith(github.ref_name, 'Q-TRANSFORM-issue-') && github.event_name == 'pull_request' && '17' || '8' }}" = "17" ]; then
+            mvn install:install-file \
+              -Dfile=./movie-service-utils/built-library/0_2_0/movie-service-utils-0.2.0.jar \
+              -DgroupId=com.amazonaws.samples \
+              -DartifactId=movie-service-utils \
+              -Dversion=0.2.0 \
+              -Dpackaging=jar
+          else
+            mvn install:install-file \
+              -Dfile=./movie-service-utils/built-library/0_1_0/movie-service-utils-0.1.0.jar \
+              -DgroupId=com.amazonaws.samples \
+              -DartifactId=movie-service-utils \
+              -Dversion=0.1.0 \
+              -Dpackaging=jar
+          fi
 
       - name: Build and copy dependencies
         run: |
-          mvn ${{ env.MAVEN_CLI_OPTS }} verify
-          mvn ${{ env.MAVEN_CLI_OPTS }} dependency:copy-dependencies -DoutputDirectory=dependencies -Dmdep.useRepositoryLayout=true -Dmdep.copyPom=true -Dmdep.addParentPoms=true
+          JAVA_VER=${{ github.ref_name != null && startsWith(github.ref_name, 'Q-TRANSFORM-issue-') && github.event_name == 'pull_request' && '17' || '1.8' }}
+          mvn verify -Djava.version=${JAVA_VER} -Dmaven.compiler.source=${JAVA_VER} -Dmaven.compiler.target=${JAVA_VER}
+          mvn dependency:copy-dependencies -DoutputDirectory=dependencies -Dmdep.useRepositoryLayout=true -Dmdep.copyPom=true -Dmdep.addParentPoms=true
 
       - name: Upload artifacts
         uses: actions/upload-artifact@v4
