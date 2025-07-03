@@ -1,7 +1,7 @@
 //javax.security.cert to java.security.cert classes migration
 package com.amazonaws.samples.appconfig.utils;
 
-import java.security.cert.*;
+import javax.security.cert.*;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileNotFoundException;
@@ -13,8 +13,7 @@ public class Security {
         X509Certificate cert = null;
         try {
             InputStream inStream = new FileInputStream(certFile);
-            CertificateFactory cf = CertificateFactory.getInstance("X.509");
-            cert = (X509Certificate) cf.generateCertificate(inStream);
+            cert = X509Certificate.getInstance(inStream);
         } catch (CertificateException e) {
             throw new RuntimeException(e);
         } catch (FileNotFoundException e) {
