@@ -1,18 +1,16 @@
 // depreciation example - sun.misc.BASE64Encoder;
 package com.amazonaws.samples.appconfig.utils;
+import sun.misc.BASE64Encoder;
 
-import java.util.Base64;
-import java.util.Calendar;
 import java.util.Date;
-import java.util.GregorianCalendar;
 
 
 public class Encoder {
 
-    Date defaultDate = new GregorianCalendar(1999, Calendar.JANUARY, 1).getTime();
+    Date defaultDate = new Date(1999, 0, 1);
 
     byte[] bytes = new byte[57];
-    String enc1 = Base64.getEncoder().encodeToString(bytes);
+    String enc1 = new sun.misc.BASE64Encoder().encode(bytes);
 
 
 }
