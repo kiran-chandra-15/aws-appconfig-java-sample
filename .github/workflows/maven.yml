@@ -6,24 +6,33 @@ on:
       - 'Q-TRANSFORM-issue-*'
   pull_request:
 
-env:
-   MAVEN_CLI_OPTS: >-
-     -Djava.version=${{ github.ref_name != null && startsWith(github.ref_name, 'Q-TRANSFORM-issue-') && github.event_name == 'pull_request' && '17' || '1.8' }}
 jobs:
   q-code-transformation:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v3
+      
+      - name: Detect Java version from pom.xml
+        id: detect-java
+        run: |
+          JAVA_VER=$(grep -o '<java.version>[^<]*</java.version>' pom.xml | sed 's/<[^>]*>//g' | head -1)
+          if [[ "$JAVA_VER" == "17" ]]; then
+            echo "java-version=17" >> $GITHUB_OUTPUT
+            echo "maven-version=17" >> $GITHUB_OUTPUT
+          else
+            echo "java-version=8" >> $GITHUB_OUTPUT
+            echo "maven-version=1.8" >> $GITHUB_OUTPUT
+          fi
+          
       - uses: actions/setup-java@v3
         with:
-          java-version: ${{ github.ref_name != null && startsWith(github.ref_name, 'Q-TRANSFORM-issue-') && github.event_name == 'pull_request' && '17' || '8' }}
-          
+          java-version: ${{ steps.detect-java.outputs.java-version }}
           distribution: 'adopt'
 
       - name: Build and copy dependencies
         run: |
-          mvn ${{ env.MAVEN_CLI_OPTS }} verify
-          mvn ${{ env.MAVEN_CLI_OPTS }} dependency:copy-dependencies -DoutputDirectory=dependencies -Dmdep.useRepositoryLayout=true -Dmdep.copyPom=true -Dmdep.addParentPoms=true
+          mvn -Djava.version=${{ steps.detect-java.outputs.maven-version }} -Dmaven.compiler.source=${{ steps.detect-java.outputs.maven-version }} -Dmaven.compiler.target=${{ steps.detect-java.outputs.maven-version }} verify
+          mvn dependency:copy-dependencies -DoutputDirectory=dependencies -Dmdep.useRepositoryLayout=true -Dmdep.copyPom=true -Dmdep.addParentPoms=true
 
       - name: Upload artifacts
         uses: actions/upload-artifact@v4
