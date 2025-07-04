@@ -16,6 +16,7 @@ import java.util.UUID;
 
 
 import static org.junit.Assert.assertEquals;
+import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.*;
 
 public class MoviesControllerTest {
@@ -33,7 +34,7 @@ public class MoviesControllerTest {
 
     @Before
     public void setUp() {
-        MockitoAnnotations.initMocks(this);
+        MockitoAnnotations.openMocks(this);
         moviesController = new MoviesController();
         moviesController.env = env;
     }
