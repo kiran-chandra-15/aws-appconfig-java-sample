@@ -3,6 +3,7 @@ package com.amazonaws.samples.appconfig.movies;
 import org.junit.Test;
 
 import java.math.BigDecimal;
+import java.math.RoundingMode;
 import com.amazonaws.samples.appconfig.utils.Math;
 
 import static org.junit.Assert.assertEquals;
@@ -14,25 +15,23 @@ public class MathTest {
         Math math = new Math();
         math.divide();
 
-        // Test divide(BigDecimal, BigDecimal, int)
+        // Test divide(BigDecimal, RoundingMode)
         BigDecimal bd = BigDecimal.valueOf(10);
         BigDecimal bd2 = BigDecimal.valueOf(2);
         BigDecimal expectedResult1 = BigDecimal.valueOf(5);
-        assertEquals(expectedResult1, bd.divide(bd2, BigDecimal.ROUND_DOWN));
+        assertEquals(expectedResult1, bd.divide(bd2, RoundingMode.DOWN));
 
-        // Test divide(BigDecimal, int)
+        // Test divide(BigDecimal, int, RoundingMode)
         BigDecimal expectedResult2 = BigDecimal.valueOf(5.0);
+        assertEquals(expectedResult2, bd.divide(bd2, 1, RoundingMode.HALF_UP));
 
-        // Test divide(BigDecimal, int, int)
+        // Test divide(BigDecimal, int, RoundingMode)
         BigDecimal expectedResult3 = BigDecimal.valueOf(5.0);
-        assertEquals(expectedResult3, bd.divide(bd2, 1, BigDecimal.ROUND_CEILING));
+        assertEquals(expectedResult3, bd.divide(bd2, 1, RoundingMode.CEILING));
 
-        BigDecimal expectedResult4 = BigDecimal.valueOf(5.0);
-        assertEquals(expectedResult4, bd.divide(bd2, 1, 1));
-
-        // Test setScale(int, int)
+        // Test setScale(int, RoundingMode)
         BigDecimal expectedResult5 = BigDecimal.valueOf(10);
-        bd.setScale(2, 1);
+        bd.setScale(2, RoundingMode.HALF_UP);
         assertEquals(expectedResult5, bd);
     }
 }
