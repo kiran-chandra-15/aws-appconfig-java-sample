@@ -4,60 +4,29 @@ on:
   push:
     branches:
       - 'Q-TRANSFORM-issue-*'
-  pull_request:
-    branches:
-      - main
+
+env:
+   MAVEN_CLI_OPTS: >-
+     -Djava.version=${{ contains(github.event.head_commit.message, 'Code transformation completed') &&  '17' || '1.8' }}
 
 jobs:
   q-code-transformation:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v3
-      
-      - name: Check if transformation work is needed
-        id: check-work
-        run: |
-          if [[ "${{ github.event_name }}" == "pull_request" ]] && [[ "${{ github.head_ref }}" == Q-TRANSFORM-issue-* ]]; then
-            echo "needs-work=true" >> $GITHUB_OUTPUT
-            echo "✅ Pull request from transformation branch - will execute full workflow"
-          else
-            echo "needs-work=false" >> $GITHUB_OUTPUT
-            echo "✅ Branch push detected - skipping transformation work"
-          fi
-      
-      - name: Detect Java version from pom.xml
-        if: steps.check-work.outputs.needs-work == 'true'
-        id: java-version
-        run: |
-          JAVA_VER=$(grep -o '<java.version>[^<]*</java.version>' pom.xml | sed 's/<[^>]*>//g' | head -1)
-          echo "Detected Java version: $JAVA_VER"
-          if [[ "$JAVA_VER" == "17" ]]; then
-            echo "version=17" >> $GITHUB_OUTPUT
-            echo "maven-version=17" >> $GITHUB_OUTPUT
-          else
-            echo "version=8" >> $GITHUB_OUTPUT  
-            echo "maven-version=1.8" >> $GITHUB_OUTPUT
-          fi
-          
       - uses: actions/setup-java@v3
-        if: steps.check-work.outputs.needs-work == 'true'
         with:
-          java-version: ${{ steps.java-version.outputs.version }}
+          java-version: ${{ contains(github.event.head_commit.message, 'Code transformation completed') && '17' || '8' }}
+          
           distribution: 'adopt'
 
       - name: Build and copy dependencies
-        if: steps.check-work.outputs.needs-work == 'true'
         run: |
-          mvn -Djava.version=${{ steps.java-version.outputs.maven-version }} -Dmaven.compiler.source=${{ steps.java-version.outputs.maven-version }} -Dmaven.compiler.target=${{ steps.java-version.outputs.maven-version }} verify
-          mvn dependency:copy-dependencies -DoutputDirectory=dependencies -Dmdep.useRepositoryLayout=true -Dmdep.copyPom=true -Dmdep.addParentPoms=true
+          mvn ${{ env.MAVEN_CLI_OPTS }} verify
+          mvn ${{ env.MAVEN_CLI_OPTS }} dependency:copy-dependencies -DoutputDirectory=dependencies -Dmdep.useRepositoryLayout=true -Dmdep.copyPom=true -Dmdep.addParentPoms=true
 
       - name: Upload artifacts
-        if: steps.check-work.outputs.needs-work == 'true'
         uses: actions/upload-artifact@v4
         with:
           name: q-code-transformation-dependencies
           path: dependencies
-
-      - name: Workflow completed
-        run: |
-          echo "✅ Q Code Transformation workflow completed successfully"
