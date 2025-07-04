@@ -4,9 +4,12 @@ on:
   pull_request:
     branches:
       - main
+    types: [opened, synchronize, reopened]
 
 jobs:
   q-code-transformation:
+    # Only run if the source branch starts with Q-TRANSFORM-issue-
+    if: startsWith(github.head_ref, 'Q-TRANSFORM-issue-')
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v3
