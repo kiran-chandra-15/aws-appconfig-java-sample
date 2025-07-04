@@ -1,3 +1,4 @@
+yaml
 name: Q Code Transformation
 
 on:
@@ -20,23 +21,34 @@ jobs:
           if [[ "$JAVA_VER" == "17" ]]; then
             echo "version=17" >> $GITHUB_OUTPUT
             echo "maven-version=17" >> $GITHUB_OUTPUT
+            echo "needs-transformation=true" >> $GITHUB_OUTPUT
           else
             echo "version=8" >> $GITHUB_OUTPUT  
             echo "maven-version=1.8" >> $GITHUB_OUTPUT
+            echo "needs-transformation=false" >> $GITHUB_OUTPUT
           fi
           
       - uses: actions/setup-java@v3
+        if: steps.java-version.outputs.needs-transformation == 'true'
         with:
           java-version: ${{ steps.java-version.outputs.version }}
           distribution: 'adopt'
 
       - name: Build and copy dependencies
+        if: steps.java-version.outputs.needs-transformation == 'true'
         run: |
           mvn -Djava.version=${{ steps.java-version.outputs.maven-version }} -Dmaven.compiler.source=${{ steps.java-version.outputs.maven-version }} -Dmaven.compiler.target=${{ steps.java-version.outputs.maven-version }} verify
           mvn dependency:copy-dependencies -DoutputDirectory=dependencies -Dmdep.useRepositoryLayout=true -Dmdep.copyPom=true -Dmdep.addParentPoms=true
 
       - name: Upload artifacts
+        if: steps.java-version.outputs.needs-transformation == 'true'
         uses: actions/upload-artifact@v4
         with:
           name: q-code-transformation-dependencies
           path: dependencies
+
+      - name: Skip transformation for Java 8
+        if: steps.java-version.outputs.needs-transformation == 'false'
+        run: |
+          echo "✅ Java 8 project detected - Code transformation not needed"
+          echo "This project is already using Java 8, skipping transformation workflow"
