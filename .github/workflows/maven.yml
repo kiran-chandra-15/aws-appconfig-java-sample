@@ -1,29 +1,38 @@
 name: Q Code Transformation
 
 on:
-  push:
-    branches:
-      - 'Q-TRANSFORM-issue-*'
   pull_request:
+    branches:
+      - main
 
-env:
-   MAVEN_CLI_OPTS: >-
-     -Djava.version=${{ github.ref_name != null && startsWith(github.ref_name, 'Q-TRANSFORM-issue-') && github.event_name == 'pull_request' && '17' || '1.8' }}
 jobs:
   q-code-transformation:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v3
+      
+      - name: Detect Java version from pom.xml
+        id: java-version
+        run: |
+          JAVA_VER=$(grep -o '<java.version>[^<]*</java.version>' pom.xml | sed 's/<[^>]*>//g' | head -1)
+          echo "Detected Java version: $JAVA_VER"
+          if [[ "$JAVA_VER" == "17" ]]; then
+            echo "version=17" >> $GITHUB_OUTPUT
+            echo "maven-version=17" >> $GITHUB_OUTPUT
+          else
+            echo "version=8" >> $GITHUB_OUTPUT  
+            echo "maven-version=1.8" >> $GITHUB_OUTPUT
+          fi
+          
       - uses: actions/setup-java@v3
         with:
-          java-version: ${{ github.ref_name != null && startsWith(github.ref_name, 'Q-TRANSFORM-issue-') && github.event_name == 'pull_request' && '17' || '8' }}
-          
+          java-version: ${{ steps.java-version.outputs.version }}
           distribution: 'adopt'
 
       - name: Build and copy dependencies
         run: |
-          mvn ${{ env.MAVEN_CLI_OPTS }} verify
-          mvn ${{ env.MAVEN_CLI_OPTS }} dependency:copy-dependencies -DoutputDirectory=dependencies -Dmdep.useRepositoryLayout=true -Dmdep.copyPom=true -Dmdep.addParentPoms=true
+          mvn -Djava.version=${{ steps.java-version.outputs.maven-version }} -Dmaven.compiler.source=${{ steps.java-version.outputs.maven-version }} -Dmaven.compiler.target=${{ steps.java-version.outputs.maven-version }} verify
+          mvn dependency:copy-dependencies -DoutputDirectory=dependencies -Dmdep.useRepositoryLayout=true -Dmdep.copyPom=true -Dmdep.addParentPoms=true
 
       - name: Upload artifacts
         uses: actions/upload-artifact@v4
