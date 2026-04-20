@@ -1,7 +1,12 @@
-//javax.security.cert to java.security.cert classes migration
+// Migrated from deprecated javax security cert to java.security.cert classes
 package com.amazonaws.samples.appconfig.utils;
 
-import javax.security.cert.*;
+import java.security.cert.Certificate;
+import java.security.cert.CertificateExpiredException;
+import java.security.cert.CertificateFactory;
+import java.security.cert.CertificateNotYetValidException;
+import java.security.cert.X509Certificate;
+import java.security.cert.CertificateException;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileNotFoundException;
@@ -13,7 +18,8 @@ public class Security {
         X509Certificate cert = null;
         try {
             InputStream inStream = new FileInputStream(certFile);
-            cert = X509Certificate.getInstance(inStream);
+            CertificateFactory cf = CertificateFactory.getInstance("X.509");
+            cert = (X509Certificate) cf.generateCertificate(inStream);
         } catch (CertificateException e) {
             throw new RuntimeException(e);
         } catch (FileNotFoundException e) {

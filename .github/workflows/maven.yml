@@ -7,18 +7,17 @@ on:
 
 env:
    MAVEN_CLI_OPTS: >-
-     -Djava.version=${{ contains(github.event.head_commit.message, 'Code transformation completed') &&  '17' || '1.8' }}
+     -Djava.version=17
 
 jobs:
   q-code-transformation:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v3
-      - uses: actions/setup-java@v3
+      - uses: actions/checkout@v4
+      - uses: actions/setup-java@v4
         with:
-          java-version: ${{ contains(github.event.head_commit.message, 'Code transformation completed') && '17' || '8' }}
-          
-          distribution: 'adopt'
+          java-version: '17'
+          distribution: 'corretto'
 
       - name: Build and copy dependencies
         run: |
